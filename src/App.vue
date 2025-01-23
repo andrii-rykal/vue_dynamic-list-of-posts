@@ -1,48 +1,62 @@
 <script setup>
-import HelloWorld from './components/HelloWorld.vue'
-import TheWelcome from './components/TheWelcome.vue'
+import { ref } from "vue";
+import { createUser, getUser } from "./api/users";
+import RegisterForm from "./components/RegisterForm.vue";
+import Header from "./components/Header.vue";
+import PostList from "./components/PostList.vue";
+import { getPosts } from "./api/posts";
+
+const user = ref(null);
+const email = ref("");
+const name = ref("");
+const posts = ref([]);
+const isNotRegister = ref(false);
+
+console.log(user);
+
+const handleGetEmail = (userEmail) => {
+  email.value = userEmail;
+
+  getUser(userEmail).then((fetchedUser) => {
+    if (fetchedUser) {
+      user.value = fetchedUser;
+      getPosts(user.value.id).then(({ data }) => {
+        posts.value = data;
+      });
+      isNotRegister.value = false;
+    } else {
+      user.value = null;
+      posts.value = [];
+      isNotRegister.value = true;
+    }
+  });
+};
+
+const handleRegister = (userName) => {
+  name.value = userName;
+  createUser(email.value, name.value)
+    .then(() => {
+      return getUser(email.value);
+    })
+    .then((createdUser) => {
+      user.value = createdUser;
+      isNotRegister.value = false;
+    });
+};
 </script>
 
 <template>
-  <header>
-    <img alt="Vue logo" class="logo" src="./assets/logo.svg" width="125" height="125" />
-
-    <div class="wrapper">
-      5555555522555555555555555555555555555
-      <HelloWorld msg="You did it!" />
-    </div>
-  </header>
-
-  <main>
-    <TheWelcome />
+  <RegisterForm
+    v-if="!user"
+    @get-email="handleGetEmail"
+    @register="handleRegister"
+    :is-not-register="isNotRegister"
+    :user="user"
+  />
+  <Header v-if="user" :user="user" @logout="user = null" />
+  <main v-if="user" class="section">
+    <PostList :posts="posts" />
   </main>
 </template>
 
-<style scoped>
-header {
-  line-height: 1.5;
-}
-
-.logo {
-  display: block;
-  margin: 0 auto 2rem;
-}
-
-@media (min-width: 1024px) {
-  header {
-    display: flex;
-    place-items: center;
-    padding-right: calc(var(--section-gap) / 2);
-  }
-
-  .logo {
-    margin: 0 2rem 0 0;
-  }
-
-  header .wrapper {
-    display: flex;
-    place-items: flex-start;
-    flex-wrap: wrap;
-  }
-}
-</style>
+<style></style>

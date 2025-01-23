@@ -1,4 +1,9 @@
-import './assets/main.css'
+import 'bulma/bulma.scss';
+// import 'bulma/css/bulma.css';
+import '@fortawesome/fontawesome-free/css/all.css';
+
+
+import './assets/main.scss'
 
 import { createApp } from 'vue'
 import App from './App.vue'
