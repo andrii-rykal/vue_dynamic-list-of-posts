@@ -6,7 +6,6 @@ export const getUsers = () => {
 
 export const getUser = (email) => {
   return getUsers().then(({ data }) => {
-    // console.log(data);
     
     return data.find(user => user.email === email);
   });

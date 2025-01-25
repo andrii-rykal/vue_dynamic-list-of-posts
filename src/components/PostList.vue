@@ -1,23 +1,24 @@
 <script setup>
-import { ref } from "vue";
-import Sidebar from "./Sidebar.vue";
+import SidebarField from "./SidebarField.vue";
+import { usePostStore } from "@/stores/posts";
 
-const props = defineProps({
-  posts: Array,
-});
+const postStore = usePostStore();
 
-const isOpenedSidebar = ref(false);
-const currentPost = ref(null);
-
-const handleClick = (post) => {
-  if (isOpenedSidebar.value && currentPost.value.id === post.id) {
-    isOpenedSidebar.value = false;
-    currentPost.value = post;
+const handleDetailsPost = (post) => {
+  if (postStore.isShowDetailsPost && postStore.currentPost?.id === post.id) {
+    postStore.notShowDetailsPost();
+    postStore.setCurrentPost(post);
   } else {
-    isOpenedSidebar.value = true;
-    currentPost.value = post;
+    postStore.showDetailsPost();
+    postStore.notShowPostForm();
+    postStore.setCurrentPost(post);
   }
 };
+
+const handlePostForm = () => {
+  postStore.showPostForm();
+  postStore.notShowDetailsPost();
+}
 </script>
 
 <template>
@@ -28,10 +29,10 @@ const handleClick = (post) => {
           <div class="block">
             <div class="block is-flex is-justify-content-space-between">
               <p class="title">Posts</p>
-              <button type="button" class="button is-link">Add New Post</button>
+              <button type="button" class="button is-link" :class="{'is-light': postStore.isShowPostForm}" @click="handlePostForm">Add New Post</button>
             </div>
 
-            <h3 v-if="!posts.length" class="has-text-centered mt-2">
+            <h3 v-if="!postStore.posts.length" class="has-text-centered mt-2">
               No posts yet.
             </h3>
 
@@ -47,17 +48,18 @@ const handleClick = (post) => {
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="post in props.posts" :key="post.id">
+                <tr v-for="post of postStore.posts" :key="post.id">
                   <td>{{ post.id }}</td>
                   <td>{{ post.title }}</td>
                   <td class="has-text-right is-vcentered">
                     <button
                       type="button"
                       class="button is-link"
-                      @click="handleClick(post)"
+                      :class="{'is-light': !(postStore.isShowDetailsPost && postStore.currentPost?.id === post.id)}"
+                      @click="handleDetailsPost(post)"
                     >
                       {{
-                        isOpenedSidebar && currentPost.id === post.id
+                        postStore.isShowDetailsPost && postStore.currentPost?.id === post.id
                           ? "Close"
                           : "Open"
                       }}
@@ -69,7 +71,7 @@ const handleClick = (post) => {
           </div>
         </div>
       </div>
-      <Sidebar :isOpened="isOpenedSidebar" :post="currentPost" />
+      <SidebarField />
     </div>
   </div>
 </template>

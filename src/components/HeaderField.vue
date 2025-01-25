@@ -1,10 +1,11 @@
 <script setup>
+import { useUserStore } from '@/stores/user';
 
-const { user } = defineProps({
-  user: Object,
-});
+const userStore = useUserStore();
 
-const emit = defineEmits(['logout']);
+const handleLogout = () => {
+  userStore.logout();
+};
 
 </script>
 
@@ -17,10 +18,10 @@ const emit = defineEmits(['logout']);
       <div class="navbar-item">
         <div class="buttons">
           <div class="mr-5">
-            <p>User: {{user.name}}</p>
+            <p>User: {{userStore.user.name}}</p>
           </div>
 
-          <a class="button is-light" @click="emit('logout')"> Logout </a>
+          <a class="button is-light" @click="handleLogout"> Logout </a>
         </div>
       </div>
     </div>

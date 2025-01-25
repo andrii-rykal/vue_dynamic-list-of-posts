@@ -1,61 +1,37 @@
 <script setup>
-import { ref } from "vue";
-import { createUser, getUser } from "./api/users";
+import { watch } from "vue";
 import RegisterForm from "./components/RegisterForm.vue";
-import Header from "./components/Header.vue";
 import PostList from "./components/PostList.vue";
-import { getPosts } from "./api/posts";
+import { usePostStore } from "./stores/posts";
+import LoaderField from "./components/LoaderField.vue";
+import { useUserStore } from "./stores/user";
+import HeaderField from "./components/HeaderField.vue";
 
-const user = ref(null);
-const email = ref("");
-const name = ref("");
-const posts = ref([]);
-const isNotRegister = ref(false);
+const postStore = usePostStore();
+const userStore = useUserStore();
 
-console.log(user);
-
-const handleGetEmail = (userEmail) => {
-  email.value = userEmail;
-
-  getUser(userEmail).then((fetchedUser) => {
-    if (fetchedUser) {
-      user.value = fetchedUser;
-      getPosts(user.value.id).then(({ data }) => {
-        posts.value = data;
-      });
-      isNotRegister.value = false;
-    } else {
-      user.value = null;
-      posts.value = [];
-      isNotRegister.value = true;
+watch(
+  () => userStore.user,
+  async (newUser) => {
+    if (newUser) {
+      await postStore.fetchPosts(newUser.id);
     }
-  });
-};
-
-const handleRegister = (userName) => {
-  name.value = userName;
-  createUser(email.value, name.value)
-    .then(() => {
-      return getUser(email.value);
-    })
-    .then((createdUser) => {
-      user.value = createdUser;
-      isNotRegister.value = false;
-    });
-};
+  }
+);
 </script>
 
 <template>
-  <RegisterForm
-    v-if="!user"
-    @get-email="handleGetEmail"
-    @register="handleRegister"
-    :is-not-register="isNotRegister"
-    :user="user"
-  />
-  <Header v-if="user" :user="user" @logout="user = null" />
-  <main v-if="user" class="section">
-    <PostList :posts="posts" />
+  <RegisterForm v-if="!userStore.user" />
+  <HeaderField v-else />
+  <main v-if="userStore.user" class="section">
+    <div
+      v-if="postStore.isLoadingPost"
+      className="is-flex is-justify-content-center is-align-items-center mt-2"
+    >
+      <LoaderField />
+    </div>
+
+    <PostList v-else />
   </main>
 </template>
 

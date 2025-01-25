@@ -1,38 +1,33 @@
 <script setup>
 import { ref, watch } from "vue";
 import InputName from "./InputName.vue";
+import { useUserStore } from "@/stores/user";
 
-const emit = defineEmits(["getEmail", "register", "getPosts"]);
-const { isNotRegister } = defineProps({
-  user: Object,
-  isNotRegister: Boolean,
-});
+const userStore = useUserStore();
 
 const inputEmail = ref("");
 const inputName = ref("");
 const emailError = ref("");
 const nameError = ref("");
 
-watch(inputEmail, (newEmail) => {
-  emailError.value = "";
-});
-
-watch(inputName, (newName) => {
-  nameError.value = "";
-});
+watch(inputEmail, () => { emailError.value = "" });
+watch(inputName, () => { nameError.value = "" });
 
 const validateEmail = () => {
   if (!inputEmail.value.trim()) {
     emailError.value = "Email is required.";
     return false;
   }
-  const emailPattern = /^([\w-]+(?:\.[\w-]+)*)@((?:[\w-]+\.)+[\w-]{2,66})$/i;
+
+  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
   if (!emailPattern.test(inputEmail.value)) {
     emailError.value = "Invalid email format.";
     return false;
   }
+
   emailError.value = "";
+
   return true;
 };
 
@@ -49,20 +44,15 @@ const validateName = () => {
   return true;
 };
 
-const handleSubmit = () => {
-  if (!validateEmail()) {
-    return;
-  }
+const handleSubmit = async () => {
+  if (!validateEmail()) return;
 
-  if (!isNotRegister) {
-    emit("getEmail", inputEmail.value);
-    // emit("getPosts");
+  if (!userStore.isNotRegistered) {
+    await userStore.fetchUserByEmail(inputEmail.value);
   } else {
-    if (!validateName()) {
-      return;
-    }
-    emit("register", inputName.value);
-  }
+    if (!validateName) return;
+    await userStore.registerUser(inputName.value);
+  }  
 };
 </script>
 
@@ -70,7 +60,7 @@ const handleSubmit = () => {
   <section class="container is-flex is-justify-content-center">
     <form @submit.prevent="handleSubmit" class="box mt-5">
       <h1 class="title is-3">
-        {{ isNotRegister ? "You need to register" : "Get your userId" }}
+        {{ userStore.isNotRegistered ? "You need to register" : "Get your userId" }}
       </h1>
 
       <div class="field">
@@ -85,7 +75,7 @@ const handleSubmit = () => {
             class="input"
             :class="{ 'is-danger': emailError }"
             placeholder="Enter your email"
-            :disabled="isNotRegister"
+            :disabled="userStore.isNotRegistered"
           />
 
           <span class="icon is-small is-left">
@@ -97,15 +87,14 @@ const handleSubmit = () => {
       </div>
 
       <InputName
-        v-if="isNotRegister"
-        :isNotRegister="isNotRegister"
+        v-if="userStore.isNotRegistered"
         :errorMessage="nameError"
         @name="inputName = $event"
       />
 
       <div class="field">
         <button type="submit" class="button is-primary">
-          {{ isNotRegister ? "Register" : "Login" }}
+          {{ userStore.isNotRegistered ? "Register" : "Login" }}
         </button>
       </div>
     </form>
